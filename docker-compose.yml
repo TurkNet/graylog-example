@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # MongoDB, Graylog'un bir bileşenidir
+  mongo:
+    image: arm64v8/mongo:6.0.16-jammy
+    container_name: mongo
+    networks:
+      - graylog
+    volumes:
+      - mongo_data:/data/db
+
+  # ElasticSearch, Graylog'un bir bileşenidir
+  elasticsearch:
+    image: elasticsearch:7.10.1
+    container_name: elasticsearch
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=127.0.0.1
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=graylog
+      - node.name=graylog
+      - "discovery.type=single-node"
+      - "ELASTIC_PASSWORD=your_elastic_password"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+    ports:
+      - 9200:9200
+    networks:
+      - graylog
+    # volumes:
+    #   - es_data:/usr/share/elasticsearch/data
+
+  # Graylog, log yönetim ve analiz sistemi
+  graylog:
+    image: graylog/graylog:6.0.4-1
+    container_name: graylog
+    user: root
+    environment:
+      # UI admin pass yourpassword
+      - GRAYLOG_HTTP_BIND_ADDRESS=0.0.0.0:9000
+      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
+      - GRAYLOG_ROOT_PASSWORD_SHA2=e3c652f0ba0b4801205814f8b6bc49672c4c74e25b497770bb89b22cdeb4e951
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://localhost:9000/
+      - GRAYLOG_MONGODB_URI=mongodb://mongo:27017/graylog
+      - GRAYLOG_ELASTICSEARCH_HOSTS=http://elastic:your_elastic_password@elasticsearch:9200
+    volumes:
+      - graylog_data:/usr/share/graylog/data
+      - ./graylog/setup_graylog_inputs.sh:/etc/graylog/setup_graylog_inputs.sh
+      # - ./graylog/server.conf:/etc/graylog/server/server.conf
+      - ./graylog/graylog.conf:/etc/graylog/server/server.conf
+    depends_on:
+      - mongo
+      - elasticsearch
+    networks:
+      - graylog
+    ports:
+      - "9000:9000"
+      - "12201:12201/udp"
+    entrypoint: /etc/graylog/setup_graylog_inputs.sh
+
+  # Logstash, logları toplamak ve Graylog'a göndermek için
+  logstash:
+    build:
+      context: ./logstash
+    container_name: logstash
+    volumes:
+      - ./logstash/config:/usr/share/logstash/config
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    links:
+      - graylog
+    depends_on:
+      - graylog
+    ports:
+      - "5601:5601"
+
+networks:
+  graylog:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+  es_data:
+    driver: local
+  graylog_data:
