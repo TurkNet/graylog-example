@@ -94,7 +94,7 @@ filter {
 
 output {
   gelf {
-    host => "graylog.graylog-examples.orb.local"
+    host => "graylog"
     port => 12201
     protocol => "UDP"
     codec => "json"
@@ -230,6 +230,8 @@ services:
       - graylog
     ports:
       - "5601:5601"
+    networks:
+      - graylog
 
 networks:
   graylog:

@@ -77,6 +77,8 @@ services:
       - graylog
     ports:
       - "5601:5601"
+    networks:
+      - graylog
 
 networks:
   graylog:
