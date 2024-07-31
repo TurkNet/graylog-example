@@ -45,7 +45,7 @@ Graylog is a powerful open-source log management platform that provides real-tim
 
 ```sh
 git clone https://github.com/TurkNet/graylog-example.git
-cd graylog-setup
+cd graylog-example
 ```
 
 ### Build and Run the Containers
