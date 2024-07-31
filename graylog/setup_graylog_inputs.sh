@@ -9,7 +9,7 @@ fi
 # Graylog'u başlat
 /docker-entrypoint.sh &
 
-# # Wait for Graylog to be fully up and running
+# Wait for Graylog to be fully up and running
 echo "Waiting for Graylog to start..."
 until curl -s -u admin:yourpassword -X GET 'http://localhost:9000/api/system/inputs' > /dev/null; do
   echo "Graylog not yet ready, waiting 5 seconds..."
@@ -17,7 +17,7 @@ until curl -s -u admin:yourpassword -X GET 'http://localhost:9000/api/system/inp
 done
 echo "Waiting for Graylog to started."
 
-# # Setup GELF UDP input
+# Setup GELF UDP input
 echo "Setting up Graylog GELF UDP input..."
 curl -u admin:yourpassword -X POST "http://localhost:9000/api/system/inputs" -H "Content-Type: application/json" -H "X-Requested-By: setup_script" -d '{
   "title": "GELF UDP",
@@ -33,5 +33,4 @@ curl -u admin:yourpassword -X POST "http://localhost:9000/api/system/inputs" -H 
 echo "Setting up Graylog GELF UDP input added."
 
 # Graylog'un foreground modda çalışmasını sağla
-# wait -n
 sleep infinity
